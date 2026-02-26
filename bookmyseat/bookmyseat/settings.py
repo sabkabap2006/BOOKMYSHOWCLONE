@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +26,7 @@ SECRET_KEY = 'django-insecure--k%%tj+rfjvq2sr6q)s6(r!aa=skuuiypakd__zvb2p*!35h#&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['vercel.app','localhost',]
 
 
 # Application definition
@@ -83,7 +84,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
+DATABASES ['default']=dj_database_url.parse('postgresql://django_bookmyshow_r9ok_user:azT1SRejn4rGTCUIK9nillCMC0hVmXTc@dpg-d6g1vqvgi27c73ckpha0-a.oregon-postgres.render.com/django_bookmyshow_r9ok')
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
