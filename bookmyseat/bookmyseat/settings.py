@@ -13,9 +13,30 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
+import ssl
+from environ import Env
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = Env()
+# Explicitly use BASE_DIR to load the environment variables prior to any module loading
+Env.read_env(os.path.join(BASE_DIR, '.env'))
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# Default to development locally unless production is specified in Render env
+ENVIRONMENT = env('ENVIRONMENT', default='development')
+
+SECRET_KEY = env('SECRET_KEY', default='wrrswz0)d0qeh^@5(j4(#zgcm*o-z#vij^8b=#9s3x)t4=li47')
+
+if ENVIRONMENT == 'development':
+    DEBUG = True
+else:
+    DEBUG = False
+
+# Bypass SSL verification for macOS Python bug
+ssl.create_default_context = ssl._create_unverified_context
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -26,8 +47,22 @@ SECRET_KEY = 'django-insecure--k%%tj+rfjvq2sr6q)s6(r!aa=skuuiypakd__zvb2p*!35h#&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app','localhost',]
+ALLOWED_HOSTS = ['*', 'johnny-pseudozoological-ighly.ngrok-free.dev']
 
+# Tell Django to trust the X-Forwarded-Proto header from Ngrok
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Tell Django to trust the Host header from Ngrok
+USE_X_FORWARDED_HOST = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://johnny-pseudozoological-ighly.ngrok-free.dev',
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.io',
+    'https://*.ngrok.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 
 # Application definition
 
@@ -38,6 +73,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
     'users',
     'movies',
 ]
@@ -49,12 +86,12 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Disabled for YouTube embed
     
 ]
 
 AUTH_USER_MODEL = 'auth.User' 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 ROOT_URLCONF = 'bookmyseat.urls'
 LOGIN_URL = '/login/'
 TEMPLATES = [
@@ -84,7 +121,10 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-DATABASES ['default']=dj_database_url.parse('postgresql://django_bookmyshow_r9ok_user:azT1SRejn4rGTCUIK9nillCMC0hVmXTc@dpg-d6g1vqvgi27c73ckpha0-a.oregon-postgres.render.com/django_bookmyshow_r9ok')
+
+# Render PostgreSQL Database Integration via Environment Variable
+database_url = env('DATABASE_URL', default='postgresql://django_bookmyshow_r9ok_user:azT1SRejn4rGTCUIK9nillCMC0hVmXTc@dpg-d6g1vqvgi27c73ckpha0-a.oregon-postgres.render.com/django_bookmyshow_r9ok')
+DATABASES['default'] = dj_database_url.parse(database_url)
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -120,8 +160,86 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 # Media files (User uploads)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+if ENVIRONMENT != 'development':
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.CloudinaryStorage'
+    CLOUDINARY_STORAGE = {
+        'CLOUDINARY_URL': env('CLOUDINARY_URL')
+    }
+
+
+import certifi
+
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'test@example.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+# Celery Configurations
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'release-expired-bookings-every-minute': {
+        'task': 'movies.tasks.release_expired_bookings',
+        'schedule': crontab(minute='*'),  # runs every minute
+    },
+}
+
+# Redis Caching for Admin Analytics Dashboard
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/1"),
+    }
+}
+
+# Logging config to capture celery task failures and info
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+        'movies.tasks': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        }
+    },
+}
+# Allow YouTube embeds - explicitly set X-Frame-Options
+X_FRAME_OPTIONS = 'ALLOWALL'
+
+# Razorpay Integration Credentials
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'rzp_test_YourKeyIdHere123')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'YourSecretKeyHere456')
+RAZORPAY_WEBHOOK_SECRET = os.getenv('RAZORPAY_WEBHOOK_SECRET', 'my_secure_webhook_secret_789')
