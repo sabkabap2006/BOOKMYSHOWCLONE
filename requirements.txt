@@ -14,9 +14,6 @@ django-cloudinary-storage
 redis
 celery
 
-# Google AI ecosystem (pinned lightly to avoid backtracking)
-google-generativeai==0.8.0
-
 # Optional Flask MongoDB integration
 Flask-PyMongo
 pymongo
