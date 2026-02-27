@@ -17,8 +17,9 @@ django-cloudinary-storage
 redis
 celery
 
-# Google AI
-google-generativeai
+# Google AI ecosystem (pinned lightly to avoid backtracking)
+google-generativeai>=0.8,<0.9
+google-ai-generativelanguage>=0.6.15,<0.7
 google-api-core
 google-api-python-client
 google-auth
@@ -26,7 +27,7 @@ google-auth-httplib2
 googleapis-common-protos
 grpcio
 grpcio-status
-protobuf
+protobuf>=4.23,<5
 proto-plus
 httpx
 httpcore
