@@ -47,7 +47,7 @@ SECRET_KEY = 'django-insecure--k%%tj+rfjvq2sr6q)s6(r!aa=skuuiypakd__zvb2p*!35h#&
 # SECURITY WARNING: don't run with debug turned on in production!
 # Debug is now securely controlled dynamically at the top of the file via the ENVIRONMENT variable
 
-ALLOWED_HOSTS = ['*', 'johnny-pseudozoological-ighly.ngrok-free.dev', 'bookmyshowclone-reyv.onrender.com']
+ALLOWED_HOSTS = ['*', 'johnny-pseudozoological-ighly.ngrok-free.dev', 'bookmyshowclone-reyv.onrender.com','bookmyshowclone-production-295b.up.railway.app']
 
 # Tell Django to trust the X-Forwarded-Proto header from Ngrok and Render
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -63,6 +63,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.ngrok.app',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://bookmyshowclone-production-295b.up.railway.app',
 ]
 
 # Application definition
