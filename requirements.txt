@@ -2,15 +2,12 @@
 Django
 Flask
 Flask-Cors
-Werkzeug
-Jinja2
-itsdangerous
-click
-MarkupSafe
+gunicorn
+whitenoise
+django-environ
 
 # Database & storage
 psycopg2-binary
-pymongo
 dj-database-url
 cloudinary
 django-cloudinary-storage
@@ -18,42 +15,15 @@ redis
 celery
 
 # Google AI ecosystem (pinned lightly to avoid backtracking)
-google-generativeai>=0.8,<0.9
-google-ai-generativelanguage>=0.6.15,<0.7
-google-api-core
-google-api-python-client
-google-auth
-google-auth-httplib2
-googleapis-common-protos
-grpcio
-grpcio-status
-protobuf>=4.23,<5
-proto-plus
-httpx
-httpcore
-
-# Utilities
-python-dotenv
-pytz
-tqdm
-cachetools
-colorama
-distro
-blinker
-tenacity
-uritemplate
-charset-normalizer
-idna
-requests
-urllib3
-rsa
-sniffio
-typing-inspection
-typing_extensions
-pyparsing
-pillow
-annotated-types
-sqlparse
+google-generativeai==0.8.0
 
 # Optional Flask MongoDB integration
 Flask-PyMongo
+pymongo
+
+# Payment
+razorpay
+
+# Utilities
+python-dotenv
+pillow
